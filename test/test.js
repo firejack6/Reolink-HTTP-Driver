@@ -1,4 +1,4 @@
-const { Reolink } = require('./index.js')
+const { Reolink } = require('../index.js')
 let cam = new Reolink("192.168.1.197", 80, "admin", "Controls")
 
 
