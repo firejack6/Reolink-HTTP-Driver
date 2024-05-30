@@ -6,3 +6,21 @@ The library is designed to meet the needs of the Akronauts Rocket Design Team, a
 
 # Github
 https://github.com/firejack6/Reolink-HTTP-Driver
+
+
+# Supported Functions
+
+Login
+Logout
+GetEnc
+Reboot*
+GetDevInfo
+GetRecV20
+Snap
+GetPtzPreset
+SetPtzPreset
+PtzCtrl
+SetIrLights
+
+
+\* admin required
