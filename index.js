@@ -1,5 +1,6 @@
 const fs=require("fs");
-const logging = true;
+const { get } = require("http");
+var logging = false;
 
 async function sendReq(ip, port, path,jsonmsg, token){
     
@@ -34,6 +35,10 @@ class Reolink {
         this.token = null;
     };
 
+    enableLogging(){
+        logging = true;
+    }
+
     async login(){
         var jsonmsg = {
             "cmd": "Login",
@@ -48,6 +53,9 @@ class Reolink {
         let resp = await sendReq(this.ip, this.port, "Login&token=null", jsonmsg)    
         this.token = resp["Token"]["name"];
         await this.getEncoding();
+        await this.recording.init(this);
+        await this.ptz.init(this);
+        await this.lights.init(this);
         return
     }
 
@@ -113,7 +121,8 @@ var recording = {
             }
         }
         let resp = await sendReq(this.ip, this.port, "GetRecV20", jsonmsg, this.token);
-        console.log("90: ",resp)
+        return resp
+        // console.log("90: ",resp)
     },
 
     // start: async function(){ // untested
@@ -137,24 +146,32 @@ var recording = {
         await fetch(url, {
             method: 'POST',
         }).then(response => response.arrayBuffer()).then(data => {
-            console.log("DATA: ",data)
+            // console.log("DATA: ",data)
             var convBuff = Buffer.from(data);
-            fs.writeFile(fileLoc, convBuff, function(err) {
-                if(err) {
-                    return console.log(err);
-                }
-                console.log("The file was saved!");
-            });
+            if(fileLoc){
+                fs.writeFile(fileLoc, convBuff, function(err) {
+                    if(err) {
+                        return console.log(err);
+                    }
+                    if(logging){
+                        console.log("The file was saved!");
+                    }
+                });
+            }
         })
-        return
+        return convBuff
     }
 }
 
 var ptz = {
-    init: function(par){
+    init: async function(par){
         this.ip = par.ip;
         this.port = par.port;
         this.token = par.token;
+        this.nameToId = {};
+        this.idToName = {};
+        await this.getPresets();
+        return;
     },
 
     getPresets: async function(){
@@ -165,13 +182,18 @@ var ptz = {
                 "channel": 0
             }
         }
-        let resp = await sendReq(this.ip, this.port, "GetPtzPreset", jsonmsg, this.token);
-        // console.log("141: ",resp)
-        return
+        let resp = await sendReq(this.ip, this.port, "GetPtzPreset", jsonmsg, this.token).then((resp) => {
+            let presetsRaw = JSON.parse(JSON.stringify(resp))["PtzPreset"];
+            for (var i = 0; i < presetsRaw.length; i++){
+                var preset = presetsRaw[i];
+                this.idToName[preset["id"]] = preset["name"];
+                this.nameToId[preset["name"]] = preset["id"];
+            }
+        });
+        return resp
     },
 
     savePreset: async function(preset, id){
-        //untested
         var jsonmsg = {
             "cmd": "SetPtzPreset",
             "action": 0,
@@ -184,7 +206,8 @@ var ptz = {
                 }
             }
         }
-        sendReq(this.ip, this.port, "SetPtzPreset", jsonmsg, this.token);
+        await sendReq(this.ip, this.port, "SetPtzPreset", jsonmsg, this.token);
+        await this.getPresets();
         return
     },
 
@@ -248,9 +271,14 @@ var ptz = {
     },
 
     toPreset: async function(preset, speed){
+        if (typeof preset == "string"){
+            preset = this.nameToId[preset]
+        }
+
         if(!speed){
             speed = 32;
         }
+
         var jsonmsg = {
             "cmd": "PtzCtrl",
             "action": 0,
