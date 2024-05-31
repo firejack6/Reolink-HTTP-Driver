@@ -1,5 +1,4 @@
 const fs=require("fs");
-const { get } = require("http");
 var logging = false;
 
 async function sendReq(ip, port, path,jsonmsg, token){
