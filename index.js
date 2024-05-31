@@ -34,10 +34,6 @@ class Reolink {
         this.token = null;
     };
 
-    enableLogging(){
-        logging = true;
-    }
-
     async login(){
         var jsonmsg = {
             "cmd": "Login",
@@ -55,6 +51,7 @@ class Reolink {
         await this.recording.init(this);
         await this.ptz.init(this);
         await this.lights.init(this);
+        await this.config.configInit(this);
         return
     }
 
@@ -77,6 +74,26 @@ class Reolink {
         }
         let resp = await sendReq(this.ip, this.port, "GetEnc", jsonmsg, this.token);
         this.encoding = resp["Enc"];
+        return this.encoding
+    }
+
+    async setEncoding(settingA, settingB, value){
+        var oldvals = this.encoding;
+        if(!settingB){
+            oldvals[settingA] = value;
+        }
+        else {
+            oldvals[settingA][settingB] = value;
+        }
+        this.encoding = oldvals;
+        var jsonmsg = {
+            "cmd": "SetEnc",
+            "action": 0,
+            "param": {
+                "Enc": oldvals
+            }
+        }
+        sendReq(this.ip, this.port, "SetEnc", jsonmsg, this.token);
         return
     }
 
@@ -111,7 +128,6 @@ var recording = {
     },
 
     status: async function() {
-        console.log("84: ",this.ip)
         var jsonmsg = {
             "cmd": "GetRecV20",
             "action": 1,
@@ -181,15 +197,16 @@ var ptz = {
                 "channel": 0
             }
         }
-        let resp = await sendReq(this.ip, this.port, "GetPtzPreset", jsonmsg, this.token).then((resp) => {
+        var resp = await sendReq(this.ip, this.port, "GetPtzPreset", jsonmsg, this.token).then((resp) => {
             let presetsRaw = JSON.parse(JSON.stringify(resp))["PtzPreset"];
             for (var i = 0; i < presetsRaw.length; i++){
                 var preset = presetsRaw[i];
                 this.idToName[preset["id"]] = preset["name"];
                 this.nameToId[preset["name"]] = preset["id"];
             }
+            return resp
         });
-        return resp
+        return JSON.parse(JSON.stringify(resp))["PtzPreset"];
     },
 
     savePreset: async function(preset, id){
@@ -315,8 +332,94 @@ var lights = {
     },
 }
 
+var config = {
+    configInit: async function(par){
+        this.ip = par.ip;
+        this.port = par.port;
+        this.token = par.token;
+        this.imageSettings = {};
+        await this.getImageSettings();
+        return
+    },
+
+    enableLogging(){
+        logging = true;
+    },
+
+    getImageSettings: async function(){
+        var jsonmsg = {
+            "cmd": "GetIsp",
+            "action": 1,
+            "param": {
+                "channel": 0
+            }
+        }
+        let resp = await sendReq(this.ip, this.port, "GetIsp", jsonmsg, this.token);
+        this.imageSettings = JSON.parse(JSON.stringify(resp))["Isp"];
+        return JSON.parse(JSON.stringify(resp))["Isp"];
+    },
+
+    setImageSetting: async function(setting, value){
+        var oldvals = this.imageSettings;
+        oldvals[setting] = value;
+        this.imageSettings = oldvals;
+        var jsonmsg = {
+            "cmd": "SetIsp",
+            "action": 0,
+            "param": {
+                "Isp": oldvals
+            }
+        }
+        sendReq(this.ip, this.port, "SetIsp", jsonmsg, this.token)
+        return
+    },
+
+    toggleMirror: async function(){
+        var oldvals = this.imageSettings;
+        if (oldvals["mirroring"] == 0){
+            oldvals["mirroring"] = 1;
+        }
+        else{
+            oldvals["mirroring"] = 0;
+        }
+        this.imageSettings = oldvals;
+        var jsonmsg = {
+            "cmd": "SetIsp",
+            "action": 0,
+            "param": {
+                "Isp": oldvals
+            }
+        }
+        sendReq(this.ip, this.port, "SetIsp", jsonmsg, this.token);
+        return oldvals["mirroring"]
+    },
+
+    toggleRotation: async function(){
+        var oldvals = this.imageSettings;
+        if (oldvals["rotation"] == 0){
+            oldvals["rotation"] = 1;
+        }
+        else{
+            oldvals["rotation"] = 0;
+        }
+        this.imageSettings = oldvals;
+        var jsonmsg = {
+            "cmd": "SetIsp",
+            "action": 0,
+            "param": {
+                "Isp": oldvals
+            }
+        }
+        sendReq(this.ip, this.port, "SetIsp", jsonmsg, this.token);
+        return oldvals["rotation"]
+    },
+
+
+}
+
 Object.assign(Reolink.prototype, {recording});
 Object.assign(Reolink.prototype, {ptz});
 Object.assign(Reolink.prototype, {lights});
+Object.assign(Reolink.prototype, {config});
 
 module.exports = { Reolink };

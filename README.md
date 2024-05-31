@@ -16,6 +16,7 @@ https://drive.google.com/drive/folders/1qvKcKswNJP_-G0tTbs_JQOuO67QqujfB
 Login   
 Logout  
 GetEnc  
+SetEnc
 Reboot*  
 GetDevInfo  
 GetRecV20  
@@ -24,6 +25,8 @@ GetPtzPreset
 SetPtzPreset  
 PtzCtrl  
 SetIrLights  
+GetIsp  
+SetIsp
 
 \* admin required
 
@@ -43,7 +46,10 @@ Logout:
 > await cam.logout();
 
 Get Encoding: 
-> await cam.getEncoding();
+> await cam.getEncoding(); - returns Dict from camera
+
+Set Encoding: **Requires restart**
+> await cam.setEncoding(SETTING, VALUE);
 
 Reboot:
 > await cam.reboot(); ***must use admin account**
@@ -54,7 +60,7 @@ Get Device Info:
 ## Recording
 
 Get recording status:
-> await cam.recording.status(); - returns raw response from camera  
+> await cam.recording.status(); - returns Dict from camera
 
 Take a picture:
 > await cam.recording.takePicture(FILE_SAVE_PATH.jpg (opt)); - returns buffer of image in .jpg
@@ -62,7 +68,7 @@ Take a picture:
 ## Pan, tilt, zoom control
 
 Get saved presets:  
-> await cam.ptz.getPresets(); - returns raw response from camera
+> await cam.ptz.getPresets(); - returns Dict of presets
 
 Save a preset position:
 > await cam.ptz.savePreset(PRESET_NAME, PRESET_ID_NUMBER);
@@ -73,25 +79,25 @@ Go to preset:
 Move:  
 > await cam.ptz.move(DIRECTION, SPEED (0-60, default 32));
 >> Available directions:  
-> - Left  
-> - Right  
-> - Up  
-> - Down
-> - LeftUp  
-> - LeftDown  
-> - RightUp  
-> - RightDown  
-> - IrisDec  (not sure what this does)  
-> - IrisInc (not sure what this does)  
-> - FocusDec  
-> - FocusInc  
-> - Auto  
-> - StartPatrol  
-> - StopPatrol  
-> - Stop*  
-> - ZoomInc*  
-> - ZoomDec*
->> \* have their own functions too
+>> - Left  
+>> - Right  
+>> - Up  
+>> - Down
+>> - LeftUp  
+>> - LeftDown  
+>> - RightUp  
+>> - RightDown  
+>> - IrisDec  (not sure what this does)  
+>> - IrisInc (not sure what this does)  
+>> - FocusDec  
+>> - FocusInc  
+>> - Auto  
+>> - StartPatrol  
+>> - StopPatrol  
+>> - Stop*  
+>> - ZoomInc*  
+>> - ZoomDec*
+>>> \* have their own functions too
 
 Zoom:  
 > await cam.ptz.zoom("In"/"Out", SPEED (0-60, default 32));
@@ -102,3 +108,20 @@ Stop moving:
 ## Lights
 IR lights:  
 > await cam.lights.setIR(STATE);
+
+## Config
+
+Enable log messages:
+> cam.config.enableLogging();
+
+Get image settings:
+> cam.config.getImageSettings(); - returns Dict from camera
+
+Set image setting:
+> cam.config.setImageSetting(SETTING, VALUE);
+
+Toggle image mirroring:
+> cam.config.toggleMirroring(); - returns mirroring value
+
+Toggle image rotation (90 deg):
+> cam.config.toggleRotation(); - returns rotation value
