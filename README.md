@@ -26,7 +26,7 @@ SetPtzPreset
 PtzCtrl  
 SetIrLights  
 GetIsp  
-SetIsp
+SetIsp*
 
 \* admin required
 
@@ -121,7 +121,7 @@ Set image setting:
 > cam.config.setImageSetting(SETTING, VALUE);
 
 Toggle image mirroring:
-> cam.config.toggleMirroring(); - returns mirroring value
+> cam.config.toggleMirror(); - returns mirroring value
 
 Toggle image rotation (90 deg):
 > cam.config.toggleRotation(); - returns rotation value

@@ -51,7 +51,7 @@ class Reolink {
         await this.recording.init(this);
         await this.ptz.init(this);
         await this.lights.init(this);
-        await this.config.configInit(this);
+        await this.config.init(this);
         return
     }
 
@@ -333,7 +333,7 @@ var lights = {
 }
 
 var config = {
-    configInit: async function(par){
+    init: async function(par){
         this.ip = par.ip;
         this.port = par.port;
         this.token = par.token;
